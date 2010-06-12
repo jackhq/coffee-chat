@@ -40,10 +40,8 @@ class Channel
       matching.push message if message.timestamp > since
     sys.p matching
     if matching.length isnt 0 
-      sys.puts "Callback Matching"
       callback matching 
     else 
-      sys.puts "Added Call back"
       @callbacks.push { timestamp: new Date(), callback: callback }  
     
     setInterval( =>

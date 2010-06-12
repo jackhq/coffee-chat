@@ -47,9 +47,6 @@ fu.staticHandler: (filename) ->
   body: ""
   headers: ""
   content_type: fu.mime.lookupExtension(extname(filename))
-  require("sys").puts extname(filename)
-  require("sys").puts content_type
-  #content_type: "text/html"
   
   loadResponseData: (callback) =>
     if body and headers and !DEBUG
