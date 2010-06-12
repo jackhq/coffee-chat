@@ -68,9 +68,6 @@
     body = "";
     headers = "";
     content_type = fu.mime.lookupExtension(extname(filename));
-    require("sys").puts(extname(filename));
-    require("sys").puts(content_type);
-    //content_type: "text/html"
     loadResponseData = __bind(function(callback) {
         if (body && headers && !DEBUG) {
           callback();

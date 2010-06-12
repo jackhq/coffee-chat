@@ -59,16 +59,10 @@
       }
     }
     sys.p(matching);
-    if (matching.length !== 0) {
-      sys.puts("Callback Matching");
-      callback(matching);
-    } else {
-      sys.puts("Added Call back");
-      this.callbacks.push({
-        timestamp: new Date(),
-        callback: callback
-      });
-    }
+    matching.length !== 0 ? callback(matching) : this.callbacks.push({
+      timestamp: new Date(),
+      callback: callback
+    });
     return setInterval(__bind(function() {
         var _d, now;
         now = new Date();
