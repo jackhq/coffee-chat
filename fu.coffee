@@ -33,7 +33,7 @@ server: createServer( (req, res) ->
 )
 
 fu.listen: (port, host) ->
-  server.listen(port, host)
+  server.listen(parseInt(port), host)
   #sys.puts("Server at http://" + (host or "127.0.0.1") + ":" + port.toString() + "/")
 
 fu.close: ->
