@@ -147,11 +147,10 @@ fu.get("/recv", (req, res) ->
   since: parseInt(qs.parse(url.parse(req.url).query).since, 10)
   
   channel.query(since, (messages) ->
-    #if session then session.poke()
+    if session then session.poke()
     res.simpleJSON(200, { messages: messages, rss: mem.rss })
     
   )
-  true
 )
 
 

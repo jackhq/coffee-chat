@@ -34,7 +34,7 @@ server: createServer( (req, res) ->
 
 fu.listen: (port, host) ->
   server.listen(port, host)
-  sys.puts("Server at http://" + (host or "127.0.0.1") + ":" + port.toString() + "/")
+  #sys.puts("Server at http://" + (host or "127.0.0.1") + ":" + port.toString() + "/")
 
 fu.close: ->
   server.close()
@@ -53,7 +53,7 @@ fu.staticHandler: (filename) ->
       callback()
       return
     
-    sys.puts("loading " + filename + "...")
+    #sys.puts("loading " + filename + "...")
     readFile(filename, (err, data) ->
       if err
         sys.puts("Error loading " + filename) 
@@ -61,7 +61,7 @@ fu.staticHandler: (filename) ->
         body: data
         headers: { "Content-Type": content_type, "Content-Length": body.length }
         if !DEBUG then headers["Cache-Control"]: "public"
-        sys.puts("static file " + filename + " loaded")
+        #sys.puts("static file " + filename + " loaded")
         callback()
     )
   
@@ -240,8 +240,7 @@ fu.mime: {
     ".zip" : "application/zip"
   },
   lookupExtension: (ext, fallback) ->
-    @TYPES[ext.toLowerCase] 
-  #|| fallback || 'application/octet-stream'
+    @TYPES[ext.toLowerCase] or fallback or 'application/octet-stream'
 
 }
 

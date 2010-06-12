@@ -48,8 +48,8 @@
     }
   });
   fu.listen = function(port, host) {
-    server.listen(port, host);
-    return sys.puts("Server at http://" + (host || "127.0.0.1") + ":" + port.toString() + "/");
+    return server.listen(port, host);
+    //sys.puts("Server at http://" + (host or "127.0.0.1") + ":" + port.toString() + "/")
   };
   fu.close = function() {
     return server.close();
@@ -73,7 +73,7 @@
           callback();
           return null;
         }
-        sys.puts("loading " + filename + "...");
+        //sys.puts("loading " + filename + "...")
         return readFile(filename, function(err, data) {
           if (err) {
             return sys.puts("Error loading " + filename);
@@ -84,7 +84,7 @@
               "Content-Length": body.length
             };
             !DEBUG ? (headers["Cache-Control"] = "public") : null;
-            sys.puts("static file " + filename + " loaded");
+            //sys.puts("static file " + filename + " loaded")
             return callback();
           }
         });
@@ -265,8 +265,7 @@
       ".zip": "application/zip"
     },
     lookupExtension: function(ext, fallback) {
-      return this.TYPES[ext.toLowerCase];
-      //|| fallback || 'application/octet-stream'
+      return this.TYPES[ext.toLowerCase] || fallback || 'application/octet-stream';
     }
   };
 })();

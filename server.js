@@ -203,13 +203,12 @@
       session.poke();
     }
     since = parseInt(qs.parse(url.parse(req.url).query).since, 10);
-    channel.query(since, function(messages) {
-      //if session then session.poke()
+    return channel.query(since, function(messages) {
+      session ? session.poke() : null;
       return res.simpleJSON(200, {
         messages: messages,
         rss: mem.rss
       });
     });
-    return true;
   });
 })();
