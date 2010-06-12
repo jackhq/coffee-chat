@@ -240,7 +240,8 @@ fu.mime: {
     ".zip" : "application/zip"
   },
   lookupExtension: (ext, fallback) ->
-    @TYPES[ext.toLowerCase] or fallback or 'application/octet-stream'
+    @TYPES[ext.toLowerCase] 
+    #or fallback or 'application/octet-stream'
 
 }
 
