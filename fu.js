@@ -12,7 +12,7 @@
   DEBUG = false;
   fu = exports;
   NOT_FOUND = "Not Found\n";
-  notFound = function notFound(req, res) {
+  notFound = function(req, res) {
     res.writeHead(404, {
       "Content-Type": "text/plain",
       "Content-Length": NOT_FOUND.length
@@ -20,7 +20,7 @@
     return res.end(NOT_FOUND);
   };
   getMap = {};
-  fu.get = function get(path, handler) {
+  fu.get = function(path, handler) {
     getMap[path] = handler;
     return getMap[path];
   };
@@ -35,7 +35,7 @@
           });
           return res.end(body);
         }, this);
-      res.simpleJSON = function simpleJSON(code, obj) {
+      res.simpleJSON = function(code, obj) {
         var body;
         body = JSON.stringify(obj);
         res.writeHead(code, {
@@ -47,14 +47,14 @@
       return handler(req, res);
     }
   });
-  fu.listen = function listen(port, host) {
+  fu.listen = function(port, host) {
     server.listen(port, host);
     return sys.puts("Server at http://" + (host || "127.0.0.1") + ":" + port.toString() + "/");
   };
-  fu.close = function close() {
+  fu.close = function() {
     return server.close();
   };
-  extname = function extname(path) {
+  extname = function(path) {
     var index;
     index = path.lastIndexOf(".");
     if (index < 0) {
@@ -63,7 +63,7 @@
       return path.substring(index);
     }
   };
-  fu.staticHandler = function staticHandler(filename) {
+  fu.staticHandler = function(filename) {
     var body, content_type, headers, loadResponseData;
     body = "";
     headers = "";
@@ -267,7 +267,7 @@
       ".yml": "text/yaml",
       ".zip": "application/zip"
     },
-    lookupExtension: function lookupExtension(ext, fallback) {
+    lookupExtension: function(ext, fallback) {
       return this.TYPES[ext.toLowerCase];
       //|| fallback || 'application/octet-stream'
     }

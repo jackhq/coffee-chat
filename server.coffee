@@ -1,5 +1,5 @@
 HOST: null
-PORT: 8001
+PORT: process.env.PORT || 8001
 
 starttime: new Date().getTime()
 
@@ -18,12 +18,10 @@ qs: require "querystring"
 MESSAGE_BACKLOG: 200
 SESSION_TIMEOUT: 60 * 1000
 
-class Channel
+class Channel    
   messages: []
-  
   callbacks: []
-  
-  appendMesssage: (nick, type, text) ->
+  appendMessage: (nick, type, text) ->
     m: { nick: nick, type: type, text: text, timestamp: new Date().getTime() }
     switch type
       when "msg"
@@ -34,20 +32,25 @@ class Channel
        sys.puts nick + " part"
     @messages.push m
     @callbacks.shift().callback([m]) while @callbacks.length > 0
-    @messages.shift() while @messages.length > MESSAGE_BACKLOG
+    @messages.shift() while @messages.length > MESSAGE_BACKLOG  
     
   query: (since, callback) ->
     matching: []
     for message in @messages
       matching.push message if message.timestamp > since
-    if matching.length != 0 then callback matching else @callbacks.push { timestamp: new Date(), callback: callback }
-      
-  
-  constructor: ->
-    on_setInterval: ->
+    sys.p matching
+    if matching.length isnt 0 
+      sys.puts "Callback Matching"
+      callback matching 
+    else 
+      sys.puts "Added Call back"
+      @callbacks.push { timestamp: new Date(), callback: callback }  
+    
+    setInterval( =>
       now: new Date()
-      @callbacks.shift().callback([]) while @callbacks.length > 0 and now - @callbacks[0].timestamp > 30*1000
-    setInterval on_setInterval, 3000
+      @callbacks.shift().callback([]) while @callbacks.length > 0 and now - @callbacks[0].timestamp > 30*1000 
+    3000
+    )
 
 
 sessions: {}
@@ -55,7 +58,8 @@ channel: new Channel()
 
 createSession: (nick) ->
   if nick.length > 50 then return null
-  if /[^\w_\-^!]/.exec nick then return null
+  if /[^\w_\-^!]/.exec(nick) 
+    return null
   for session in sessions
     if session.nick == nick then return null
   
@@ -90,7 +94,7 @@ fu.get("/", fu.staticHandler("index.html"))
 fu.get("/style.css", fu.staticHandler("style.css"))
 fu.get("/client.js", fu.staticHandler("client.js"))
 fu.get("/jquery-1.4.2.min.js", fu.staticHandler("jquery-1.4.2.min.js"))
-#   
+
 fu.get('/who', (req, res) ->
   nicks: []
   for session in sessions
@@ -113,32 +117,6 @@ fu.get('/join', (req, res) ->
   res.simpleJSON(200, { id: session.id, nick: session.nick, rss: mem.rss, starttime: starttime })
 )
 
-fu.get("/part", (req, res) -> 
-  id: qs.parse(url.parse(req.url).query).id
-  if id and sessions[id]
-    session: sessions[id]
-    session.destroy()
-  res.simpleJSON(200, { rss: mem.rss })
-
-fu.get "/recv", (req, res) ->
-  if !qs.parse(url.parse(req.url).query).since
-    res.simpleJSON(400, { error: "Must supply since parameter" })
-    return
-  
-  id: qs.parse(url.parse(req.url).query).id
-  if id and sessions[id]
-    session: sessions[id]
-    session.poke()
-    
-  since: parseInt(qs.parse(url.parse(req.url).query).since, 10)
-  
-  channel.query(since, (message) ->
-    if session then session.poke()
-    res.simpleJSON(200, { messages: messages, rss: mem.rss })
-    
-  )
-)
-
 fu.get("/send", (req, res) ->
   id: qs.parse(url.parse(req.url).query).id
   text: qs.parse(url.parse(req.url).query).text
@@ -151,4 +129,31 @@ fu.get("/send", (req, res) ->
   channel.appendMessage session.nick, "msg", text
   res.simpleJSON(200, { rss: mem.rss })
 )
+
+
+fu.get("/part", (req, res) -> 
+  id: qs.parse(url.parse(req.url).query).id
+  if id and sessions[id]
+    session: sessions[id]
+    session.destroy()
+  res.simpleJSON(200, { rss: mem.rss })
+)
+
+fu.get("/recv", (req, res) ->
+  sys.puts "recv called"
+  id: qs.parse(url.parse(req.url).query).id
+  if id and sessions[id]
+    session: sessions[id]
+    session.poke()
+    
+  since: parseInt(qs.parse(url.parse(req.url).query).since, 10)
+  
+  channel.query(since, (messages) ->
+    #if session then session.poke()
+    res.simpleJSON(200, { messages: messages, rss: mem.rss })
+    
+  )
+  true
+)
+
 

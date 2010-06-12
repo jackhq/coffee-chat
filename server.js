@@ -1,10 +1,15 @@
 (function(){
   var Channel, HOST, MESSAGE_BACKLOG, PORT, SESSION_TIMEOUT, channel, createSession, fu, kill_sessions, mem, mem_usage, qs, sessions, starttime, sys, url;
+  var __slice = Array.prototype.slice, __bind = function(func, obj, args) {
+    return function() {
+      return func.apply(obj || {}, args ? args.concat(__slice.call(arguments, 0)) : arguments);
+    };
+  };
   HOST = null;
-  PORT = 8001;
+  PORT = process.env.PORT || 8001;
   starttime = new Date().getTime();
   mem = process.memoryUsage();
-  mem_usage = function mem_usage() {
+  mem_usage = function() {
     mem = process.memoryUsage();
     return mem;
   };
@@ -15,24 +20,10 @@
   qs = require("querystring");
   MESSAGE_BACKLOG = 200;
   SESSION_TIMEOUT = 60 * 1000;
-  Channel = function Channel() {
-    Channel.prototype.messages = [];
-    Channel.prototype.callbacks = [];
-    
-    var on_setInterval;
-    on_setInterval = function on_setInterval() {
-      var _a, now;
-      now = new Date();
-      _a = [];
-      while (this.callbacks.length > 0 && now - this.callbacks[0].timestamp > 30 * 1000) {
-        _a.push(this.callbacks.shift().callback([]));
-      }
-      return _a;
-    };
-    setInterval(on_setInterval, 3000);
-    return this;
-  };
-  Channel.prototype.appendMesssage = function appendMesssage(nick, type, text) {
+  Channel = function() {  };
+  Channel.prototype.messages = [];
+  Channel.prototype.callbacks = [];
+  Channel.prototype.appendMessage = function(nick, type, text) {
     var _a, m;
     m = {
       nick: nick,
@@ -57,7 +48,7 @@
     }
     return _a;
   };
-  Channel.prototype.query = function query(since, callback) {
+  Channel.prototype.query = function(since, callback) {
     var _a, _b, _c, matching, message;
     matching = [];
     _b = this.messages;
@@ -67,18 +58,31 @@
         matching.push(message);
       }
     }
+    sys.p(matching);
     if (matching.length !== 0) {
-      return callback(matching);
+      sys.puts("Callback Matching");
+      callback(matching);
     } else {
-      return this.callbacks.push({
+      sys.puts("Added Call back");
+      this.callbacks.push({
         timestamp: new Date(),
         callback: callback
       });
     }
+    return setInterval(__bind(function() {
+        var _d, now;
+        now = new Date();
+        _d = [];
+        while (this.callbacks.length > 0 && now - this.callbacks[0].timestamp > 30 * 1000) {
+          _d.push(this.callbacks.shift().callback([]));
+        }
+        return _d;
+      }, this), 3000);
   };
+
   sessions = {};
   channel = new Channel();
-  createSession = function createSession(nick) {
+  createSession = function(nick) {
     var _a, _b, _c, session;
     if (nick.length > 50) {
       return null;
@@ -97,11 +101,11 @@
       nick: nick,
       id: Math.floor(Math.random() * 99999999999).toString(),
       timestamp: new Date(),
-      poke: function poke() {
+      poke: function() {
         session.timestamp = new Date();
         return session.timestamp;
       },
-      destroy: function destroy() {
+      destroy: function() {
         channel.appendMessage(session.nick, "part");
         return delete sessions[session.id];
       }
@@ -109,7 +113,7 @@
     sessions[session.id] = session;
     return session;
   };
-  kill_sessions = function kill_sessions() {
+  kill_sessions = function() {
     var _a, _b, _c, now, session;
     now = new Date();
     _b = sessions;
@@ -128,7 +132,6 @@
   fu.get("/style.css", fu.staticHandler("style.css"));
   fu.get("/client.js", fu.staticHandler("client.js"));
   fu.get("/jquery-1.4.2.min.js", fu.staticHandler("jquery-1.4.2.min.js"));
-  //
   fu.get('/who', function(req, res) {
     var _a, _b, _c, nicks, session;
     nicks = [];
@@ -169,38 +172,6 @@
       starttime: starttime
     });
   });
-  fu.get("/part", function(req, res) {
-    var id, session;
-    id = qs.parse(url.parse(req.url).query).id;
-    if (id && sessions[id]) {
-      session = sessions[id];
-      session.destroy();
-    }
-    return res.simpleJSON(200, {
-      rss: mem.rss
-    });
-  }, fu.get("/recv", function(req, res) {
-    var id, session, since;
-    if (!qs.parse(url.parse(req.url).query).since) {
-      res.simpleJSON(400, {
-        error: "Must supply since parameter"
-      });
-      return null;
-    }
-    id = qs.parse(url.parse(req.url).query).id;
-    if (id && sessions[id]) {
-      session = sessions[id];
-      session.poke();
-    }
-    since = parseInt(qs.parse(url.parse(req.url).query).since, 10);
-    return channel.query(since, function(message) {
-      session ? session.poke() : null;
-      return res.simpleJSON(200, {
-        messages: messages,
-        rss: mem.rss
-      });
-    });
-  }));
   fu.get("/send", function(req, res) {
     var id, session, text;
     id = qs.parse(url.parse(req.url).query).id;
@@ -217,5 +188,34 @@
     return res.simpleJSON(200, {
       rss: mem.rss
     });
+  });
+  fu.get("/part", function(req, res) {
+    var id, session;
+    id = qs.parse(url.parse(req.url).query).id;
+    if (id && sessions[id]) {
+      session = sessions[id];
+      session.destroy();
+    }
+    return res.simpleJSON(200, {
+      rss: mem.rss
+    });
+  });
+  fu.get("/recv", function(req, res) {
+    var id, session, since;
+    sys.puts("recv called");
+    id = qs.parse(url.parse(req.url).query).id;
+    if (id && sessions[id]) {
+      session = sessions[id];
+      session.poke();
+    }
+    since = parseInt(qs.parse(url.parse(req.url).query).since, 10);
+    channel.query(since, function(messages) {
+      //if session then session.poke()
+      return res.simpleJSON(200, {
+        messages: messages,
+        rss: mem.rss
+      });
+    });
+    return true;
   });
 })();
