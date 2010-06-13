@@ -38,7 +38,6 @@ class Channel
     matching: []
     for message in @messages
       matching.push message if message.timestamp > since
-    sys.p matching
     if matching.length isnt 0 
       callback matching 
     else 
@@ -56,8 +55,7 @@ channel: new Channel()
 
 createSession: (nick) ->
   if nick.length > 50 then return null
-  if /[^\w_\-^!]/.exec(nick) 
-    return null
+  if /[^\w_\-^!]/.exec(nick) then return null
   for session in sessions
     if session.nick == nick then return null
   
@@ -138,7 +136,6 @@ fu.get("/part", (req, res) ->
 )
 
 fu.get("/recv", (req, res) ->
-  sys.puts "recv called"
   id: qs.parse(url.parse(req.url).query).id
   if id and sessions[id]
     session: sessions[id]

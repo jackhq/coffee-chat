@@ -58,7 +58,6 @@
         matching.push(message);
       }
     }
-    sys.p(matching);
     matching.length !== 0 ? callback(matching) : this.callbacks.push({
       timestamp: new Date(),
       callback: callback
@@ -196,7 +195,6 @@
   });
   fu.get("/recv", function(req, res) {
     var id, session, since;
-    sys.puts("recv called");
     id = qs.parse(url.parse(req.url).query).id;
     if (id && sessions[id]) {
       session = sessions[id];

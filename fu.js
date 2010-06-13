@@ -265,7 +265,7 @@
       ".zip": "application/zip"
     },
     lookupExtension: function(ext, fallback) {
-      return this.TYPES[ext.toLowerCase];
+      return this.TYPES[ext.toLowerCase()];
       //or fallback or 'application/octet-stream'
     }
   };
