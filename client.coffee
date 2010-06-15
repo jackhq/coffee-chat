@@ -12,16 +12,16 @@ nicks: []
 Date::toRelativeTime: (now_threshold) ->
   delta: new Date() - this
   now_threshold: parseInt(now_threshold, 10)
-  if isNaN(now_threshold) then now_threshold: 0
-  if delta <= now_threshold then return 'Just now'
+  now_threshold: 0 if isNaN(now_threshold)
+  return 'Just now' if delta <= now_threshold
   units: null
   conversions: {
-    millisecond: 1, # ms    -> ms
-    second: 1000,   # ms    -> sec
-    minute: 60,     # sec   -> min
-    hour:   60,     # min   -> hour
-    day:    24,     # hour  -> day
-    month:  30,     # day   -> month (roughly)
+    millisecond: 1 # ms    -> ms
+    second: 1000   # ms    -> sec
+    minute: 60     # sec   -> min
+    hour:   60     # min   -> hour
+    day:    24     # hour  -> day
+    month:  30     # day   -> month (roughly)
     year:   12      # month -> year    
   }
 
@@ -33,7 +33,7 @@ Date::toRelativeTime: (now_threshold) ->
       delta: delta / value
       
   delta: Math.floor(delta)
-  if delta isnt 1 then units += 's'
+  units += 's' if delta isnt 1 
   return [delta, units].join(" ")
   
 
@@ -42,7 +42,7 @@ Date.fromString: (str) -> new Date(Date.parse(str))
 #updates the users link to reflect the number of active users
 updateUsersLink: ->
   t: nicks.length.toString() + " user"
-  if nicks.length isnt 1 then t += "s"
+  t += "s" if nicks.length isnt 1
   $("#usersLink").text t
 
 
@@ -50,60 +50,41 @@ updateUsersLink: ->
 userJoin: (nick, timestamp) ->
   #put it in the stream
   addMessage nick, "joined", timestamp, "join"
-  #if we already know about this user, ignore it
-  for n in nicks
-    if n is nick then return
-  #otherwise, add the user to the list
-  nicks.push(nick)
-  #update the UI
-  updateUsersLink()
+  if nicks.indexOf(nick) is -1
+    #otherwise, add the user to the list
+    nicks.push nick
+    #update the UI
+    updateUsersLink()
 
 #handles someone leaving
 userPart: (nick, timestamp) ->
   #put it in the stream
   addMessage nick, "left", timestamp, "part"
   #remove the user from the list
-  for n in nicks
-    if n is nick       
-      nicks.splice(i,1)
-      break
-      
+  nicks.split nicks.indexOf(nick), 1      
   #update the UI
-  updateUsersLink();
+  updateUsersLink()
 
 # utility functions
-
-util: {
-  urlRE: /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g, 
-
-  #  html sanitizer 
+class Util
+  urlRE: /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g
   toStaticHTML: (inputHtml) ->
     inputHtml: inputHtml.toString()
-    return inputHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-
-  #pads n with zeros on the left,
-  #digits is minimum length of output
-  #zeroPad(3, 5); returns "005"
-  #zeroPad(2, 500); returns "500"
+    inputHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")  
   zeroPad: (digits, n) ->
     n = n.toString()
     while n.length < digits
       n = '0' + n
-    return n
-
-  #it is almost 8 o'clock PM here
-  #timeString(new Date); returns "19:49"
+    n
   timeString: (date) ->
     minutes: date.getMinutes().toString()
     hours: date.getHours().toString()
-    return @zeroPad(2, hours) + ":" + @zeroPad(2, minutes)
-
-
-  #does the argument only contain whitespace?
+    @zeroPad(2, hours) + ":" + @zeroPad(2, minutes)
   isBlank: (text) ->
     blank: /^\s*$/
-    return text.match(blank) isnt null
-}
+    text.match(blank) isnt null
+
+util: new Util()
 
 #used to keep the most recent messages visible
 scrollDown: ->
@@ -115,8 +96,7 @@ scrollDown: ->
 #from is the user, text is the body and time is the timestamp, defaulting to now
 #_class is a css class to apply to the message, usefull for system events
 addMessage: (from, text, time, _class) ->
-  if text is null then return
-
+  return if text is null 
   if time is null 
     # if the time is null or undefined, use the current time.
     time: new Date()
@@ -129,20 +109,17 @@ addMessage: (from, text, time, _class) ->
   #  the person who caused the event,
   #  and the content
   messageElement: $(document.createElement("table"))
-
   messageElement.addClass("message")
-  if _class then messageElement.addClass(_class)
+  messageElement.addClass(_class) if _class 
 
   # sanitize
   text: util.toStaticHTML(text)
 
   # If the current user said this, add a special css class
   nick_re: new RegExp(CONFIG.nick)
-  if nick_re.exec(text) then messageElement.addClass("personal")
-
+  messageElement.addClass("personal") if nick_re.exec(text) 
   # replace URLs with links
   text: text.replace(util.urlRE, '<a target="_blank" href="$&">$&</a>')
-
   content: """
       <tr>
         <td class="date">${ util.timeString(time) }</td>
@@ -229,7 +206,7 @@ longPoll: (data) ->
       #don't flood the servers on error, wait 10 seconds before retrying
       setTimeout(longPoll, 10*1000)
     success: (data) ->
-      transmission_errors = 0;
+      transmission_errors: 0
       #if everything went well, begin another request immediately
       #the server will take a long time to respond
       #how long? well, it will wait until there is another message
@@ -330,7 +307,6 @@ who: ->
   )
 
 $(document).ready( ->
-  alert('hello world')
   #submit new messages when the user hits enter if the message isnt blank
   $("#entry").keypress( (e) ->
     if e.keyCode isnt 13 then return

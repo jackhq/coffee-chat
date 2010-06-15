@@ -1,4 +1,4 @@
-var Channel, HOST, MESSAGE_BACKLOG, PORT, SESSION_TIMEOUT, channel, createSession, fu, kill_sessions, mem, mem_usage, qs, sessions, starttime, sys, url;
+var Channel, HOST, MESSAGE_BACKLOG, PORT, SESSION_TIMEOUT, channel, createSession, fu, kill_sessions, mem, qs, sessions, starttime, sys, url;
 var __slice = Array.prototype.slice, __bind = function(func, obj, args) {
     return function() {
       return func.apply(obj || {}, args ? args.concat(__slice.call(arguments, 0)) : arguments);
@@ -6,19 +6,19 @@ var __slice = Array.prototype.slice, __bind = function(func, obj, args) {
   };
 HOST = null;
 PORT = process.env.PORT || 8001;
+MESSAGE_BACKLOG = 200;
+SESSION_TIMEOUT = 60 * 1000;
 starttime = new Date().getTime();
 mem = process.memoryUsage();
-mem_usage = function() {
+setInterval(function() {
   mem = process.memoryUsage();
   return mem;
-};
-setInterval(mem_usage, 10 * 1000);
+}, 10 * 1000);
 fu = require("./fu");
 sys = require("sys");
 url = require("url");
 qs = require("querystring");
-MESSAGE_BACKLOG = 200;
-SESSION_TIMEOUT = 60 * 1000;
+sessions = {};
 Channel = function() {};
 Channel.prototype.messages = [];
 Channel.prototype.callbacks = [];
@@ -72,7 +72,6 @@ Channel.prototype.query = function(since, callback) {
     }, this), 3000);
 };
 
-sessions = {};
 channel = new Channel();
 createSession = function(nick) {
   var _a, _b, _c, session;

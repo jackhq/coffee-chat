@@ -1,4 +1,4 @@
-var CONFIG, addMessage, first_poll, longPoll, nicks, onConnect, outputUsers, rss, scrollDown, send, showChat, showConnect, showLoad, starttime, transmission_errors, updateRSS, updateTitle, updateUptime, updateUsersLink, userJoin, userPart, util, who;
+var CONFIG, Util, addMessage, first_poll, longPoll, nicks, onConnect, outputUsers, rss, scrollDown, send, showChat, showConnect, showLoad, starttime, transmission_errors, updateRSS, updateTitle, updateUptime, updateUsersLink, userJoin, userPart, util, who;
 var __hasProp = Object.prototype.hasOwnProperty;
 CONFIG = {
   debug: false,
@@ -17,7 +17,9 @@ Date.prototype.toRelativeTime = function(now_threshold) {
   var _a, conversions, delta, key, units, value;
   delta = new Date() - this;
   now_threshold = parseInt(now_threshold, 10);
-  isNaN(now_threshold) ? (now_threshold = 0) : null;
+  if (isNaN(now_threshold)) {
+    now_threshold = 0;
+  }
   if (delta <= now_threshold) {
     return 'Just now';
   }
@@ -49,7 +51,9 @@ Date.prototype.toRelativeTime = function(now_threshold) {
     }
   }}
   delta = Math.floor(delta);
-  delta !== 1 ? units += 's' : null;
+  if (delta !== 1) {
+    units += 's';
+  }
   return [delta, units].join(" ");
 };
 Date.fromString = function(str) {
@@ -59,78 +63,58 @@ Date.fromString = function(str) {
 updateUsersLink = function() {
   var t;
   t = nicks.length.toString() + " user";
-  nicks.length !== 1 ? t += "s" : null;
+  if (nicks.length !== 1) {
+    t += "s";
+  }
   return $("#usersLink").text(t);
 };
 //handles another person joining chat
 userJoin = function(nick, timestamp) {
-  var _a, _b, _c, n;
   //put it in the stream
   addMessage(nick, "joined", timestamp, "join");
-  //if we already know about this user, ignore it
-  _b = nicks;
-  for (_a = 0, _c = _b.length; _a < _c; _a++) {
-    n = _b[_a];
-    if (n === nick) {
-      return null;
-    }
+  if (nicks.indexOf(nick) === -1) {
     //otherwise, add the user to the list
+    nicks.push(nick);
+    //update the UI
+    return updateUsersLink();
   }
-  nicks.push(nick);
-  //update the UI
-  return updateUsersLink();
 };
 //handles someone leaving
 userPart = function(nick, timestamp) {
-  var _a, _b, _c, n;
   //put it in the stream
   addMessage(nick, "left", timestamp, "part");
   //remove the user from the list
-  _b = nicks;
-  for (_a = 0, _c = _b.length; _a < _c; _a++) {
-    n = _b[_a];
-    if (n === nick) {
-      nicks.splice(i, 1);
-      break;
-    }
-  }
+  nicks.split(nicks.indexOf(nick), 1);
   //update the UI
   return updateUsersLink();
 };
 // utility functions
-util = {
-  urlRE: /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g,
-  //  html sanitizer
-  toStaticHTML: function(inputHtml) {
-    inputHtml = inputHtml.toString();
-    return inputHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  },
-  //pads n with zeros on the left,
-  //digits is minimum length of output
-  //zeroPad(3, 5); returns "005"
-  //zeroPad(2, 500); returns "500"
-  zeroPad: function(digits, n) {
-    n = n.toString();
-    while (n.length < digits) {
-      n = '0' + n;
-    }
-    return n;
-  },
-  //it is almost 8 o'clock PM here
-  //timeString(new Date); returns "19:49"
-  timeString: function(date) {
-    var hours, minutes;
-    minutes = date.getMinutes().toString();
-    hours = date.getHours().toString();
-    return this.zeroPad(2, hours) + ":" + this.zeroPad(2, minutes);
-  },
-  //does the argument only contain whitespace?
-  isBlank: function(text) {
-    var blank;
-    blank = /^\s*$/;
-    return text.match(blank) !== null;
-  }
+Util = function() {};
+Util.prototype.urlRE = /https?:\/\/([-\w\.]+)+(:\d+)?(\/([^\s]*(\?\S+)?)?)?/g;
+Util.prototype.toStaticHTML = function(inputHtml) {
+  inputHtml = inputHtml.toString();
+  return inputHtml.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 };
+Util.prototype.zeroPad = function(digits, n) {
+  n = n.toString();
+  while (n.length < digits) {
+    n = '0' + n;
+  }
+  return n;
+};
+Util.prototype.timeString = function(date) {
+  var hours, minutes;
+  minutes = date.getMinutes().toString();
+  hours = date.getHours().toString();
+  return this.zeroPad(2, hours) + ":" + this.zeroPad(2, minutes);
+};
+Util.prototype.isBlank = function(text) {
+  var blank;
+  blank = /^\s*$/;
+  return text.match(blank) !== null;
+};
+
+util = new Util();
 //used to keep the most recent messages visible
 scrollDown = function() {
   window.scrollBy(0, 100000000000000000);
@@ -158,12 +142,16 @@ addMessage = function(from, text, time, _class) {
   //  and the content
   messageElement = $(document.createElement("table"));
   messageElement.addClass("message");
-  _class ? messageElement.addClass(_class) : null;
+  if (_class) {
+    messageElement.addClass(_class);
+  }
   // sanitize
   text = util.toStaticHTML(text);
   // If the current user said this, add a special css class
   nick_re = new RegExp(CONFIG.nick);
-  nick_re.exec(text) ? messageElement.addClass("personal") : null;
+  if (nick_re.exec(text)) {
+    messageElement.addClass("personal");
+  }
   // replace URLs with links
   text = text.replace(util.urlRE, '<a target="_blank" href="$&">$&</a>');
   content = ("<tr>\n  <td class=\"date\">" + (util.timeString(time)) + "</td>\n  <td class=\"nick\">" + (util.toStaticHTML(from)) + "</td>\n  <td class=\"msg-text\">" + text + "</td>\n</tr>");
@@ -348,7 +336,6 @@ who = function() {
   }, "json");
 };
 $(document).ready(function() {
-  alert('hello world');
   //submit new messages when the user hits enter if the message isnt blank
   $("#entry").keypress(function(e) {
     var msg;

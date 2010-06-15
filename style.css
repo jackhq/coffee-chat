@@ -22,6 +22,10 @@ table {
   border-spacing: 0
 }
 
+#app {
+ width: 960px;
+ margin: 0 auto; 
+}
 
 a { text-decoration: none; color: #888; }
 a:hover { text-decoration: underline; color: #aaa; }
@@ -46,11 +50,11 @@ a:hover { text-decoration: underline; color: #aaa; }
 }
 
 #toolbar {
-  position: fixed;
+  /* position: fixed; */
   color: #fff;
   width: 100%; 
   bottom: 0;
-  background: #733;
+  background: #003E00;
 }
 
 #entry {

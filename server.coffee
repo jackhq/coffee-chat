@@ -1,22 +1,21 @@
 HOST: null
 PORT: process.env.PORT || 8001
+MESSAGE_BACKLOG: 200
+SESSION_TIMEOUT: 60 * 1000
 
 starttime: new Date().getTime()
 
 mem: process.memoryUsage()
-
-mem_usage: ->
+setInterval( ->
   mem: process.memoryUsage()
-  
-setInterval mem_usage, 10*1000
+10*1000)
 
 fu: require "./fu"
 sys: require "sys"
 url: require "url"
 qs: require "querystring"
 
-MESSAGE_BACKLOG: 200
-SESSION_TIMEOUT: 60 * 1000
+sessions: {}
 
 class Channel    
   messages: []
@@ -46,11 +45,10 @@ class Channel
     setInterval( =>
       now: new Date()
       @callbacks.shift().callback([]) while @callbacks.length > 0 and now - @callbacks[0].timestamp > 30*1000 
-    3000
-    )
+    3000)
 
 
-sessions: {}
+
 channel: new Channel()
 
 createSession: (nick) ->
